@@ -1,78 +1,83 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <script src="http://cloud.apizee.com/libs/jquery-1.9.0.min.js"></script>
-        <script src="http://cloud.apizee.com/apiRTC/apiRTC-latest.min.js"></script>
-    </head>
-    <body>
-        <input type="text" id="number" value="" placeholder="Enter Destination ID..."/>
-        <input id="call" type="button" disabled="true" value="Registration Ongoing..." />
-        <input id="hangup" type="button" disabled="true" value="Hangup" />
-        <span id="status"></span>
-
-        <div id="local" style="position: absolute;"><video id="myLocalVideo" autoplay="autoplay" muted="true"></video></div>
-        <div id="remote" style="position: absolute;">
-            <div id="myRemoteVideo" style="width:640px; height:480px;"></div>
-            <div id="mini"><video width="30%" height="30%" id="myMiniVideo" autoplay="autoplay" muted="true"></video></div>
-        </div>
-
-        <script>
-
-        'use strict';
-        var session = null;
-
-        function userMediaErrorHandler(e) {
-            $("#call").attr("disabled", false).val("Call");
-            $("#hangup").attr("disabled", true).val("Hangup");
-        }
-
-        function remoteHangupHandler(e) {
-            if (e.detail.lastEstablishedCall === true) {
-                $("#call").attr("disabled", false).val("Call");
-                $("#hangup").attr("disabled", true).val("Hangup");
-            }
-        }
-
-        function incomingCallHandler(e) {
-            apiRTC.addEventListener("remoteHangup", remoteHangupHandler);
-            $("#call").attr("disabled", true).val("Call ongoing");
-            $("#hangup").attr("disabled", false).val("Hangup");
-        }
-
-        function sessionReadyHandler(e) {
-            console.log('sessionReadyHandler :' + apiCC.session.apiCCId);
-
-            $("#call").attr("disabled", false).val("Call");
-
-            apiRTC.addEventListener("incomingCall", incomingCallHandler);
-            apiRTC.addEventListener("userMediaError", userMediaErrorHandler);
-
-            var webRTCClient = apiCC.session.createWebRTCClient({
-                localVideo : "myLocalVideo",
-                minilocalVideo : "myMiniVideo",
-                remoteVideo : "myRemoteVideo",
-                status : "status"
-            });
-
-            $("#call").click(function () {
-                $("#call").attr("disabled", true).val("Call ongoing");
-                $("#hangup").attr("disabled", false).val("Hangup");
-                apiRTC.addEventListener("remoteHangup", remoteHangupHandler);
-                webRTCClient.call($("#number").val());
-            });
-
-            $("#hangup").click(function () {
-                $("#call").attr("disabled", false).val("Call");
-                $("#hangup").attr("disabled", true).val("Hangup");
-                webRTCClient.hangUp();
-            });
-        }
-
-        apiRTC.init({
-            apiKey : "myDemoApiKey",
-            //apiCCId : "2345",
-            onReady : sessionReadyHandler
-        });
-
-        </script>
-    </body>
+ <head>
+ <script src="https://cloud.apizee.com/libs/jquery-1.9.0.min.js"></script>
+ <script src="cordova.js"></script>
+ <script src="https://cloud.apizee.com/apiRTC/v2.14/apiRTC-2.14.min.js"></script>
+ </head>
+ 
+ <body onload="onLoad()">
+ <input type="text" id="number" value="" placeholder="Enter Destination ID"/>
+ <input id="call" type="button" value="Call" />
+ <input id="hangup" type="button" hidden value="Hangup" />
+ <span id="status">Registration Ongoing</span>
+ 
+ <div id="myRemoteVideo" style="width:640px; height:480px;"></div>
+ <video width="30%" height="30%" id="myMiniVideo" autoplay="autoplay"></video>
+ 
+ <script>
+ 
+ function incomingCallHandler(e) {
+ apiRTC.addEventListener("remoteHangup", remoteHangupHandler);
+ $("#call").hide();
+ $("#hangup").show();
+ }
+ 
+ function remoteHangupHandler(e) {
+ $("#call").show();
+ $("#hangup").hide();
+ }
+ 
+ function userMediaErrorHandler(e) {
+ $("#call").show();
+ $("#hangup").hide();
+ }
+ 
+ function sessionReadyHandler(e) {
+ 
+ apiRTC.addEventListener("incomingCall", incomingCallHandler);
+ apiRTC.addEventListener("userMediaError", userMediaErrorHandler);
+ 
+ var webRTCClient = apiCC.session.createWebRTCClient({
+ minilocalVideo : "myMiniVideo",
+ remoteVideo : "myRemoteVideo",
+ status : "status"
+ });
+ 
+ $("#call").click(function () {
+ $("#call").hide();
+ $("#hangup").show();
+ 
+ apiRTC.addEventListener("remoteHangup", remoteHangupHandler);
+ destNumber = $("#number").val();
+ webRTCClient.call(destNumber);
+ });
+ 
+ $("#hangup").click(function () {
+ $("#call").show();
+ $("#hangup").hide();
+ 
+ webRTCClient.hangUp();
+ });
+ }
+ 
+ function onDeviceReady() {
+ 
+ if (device.platform == 'iOS'){
+ cordova.plugins.iosrtc.registerGlobals();
+ }
+ }
+ 
+ function onLoad() {
+ 
+ apiRTC.init({
+ //apiCCId : "1234", // Your can overide your number
+ onReady: sessionReadyHandler,
+ apiKey : "myDemoApiKey"
+ });
+ 
+ document.addEventListener("deviceready", onDeviceReady, false);
+ }
+ </script>
+ </body>
 </html>
